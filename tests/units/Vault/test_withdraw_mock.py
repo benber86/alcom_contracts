@@ -4,7 +4,7 @@ import math
 
 
 @pytest.mark.parametrize("amount", [1, 100, 10**18])
-def test_mutiple_withdraw_mock(amount, alice, bob, charlie, dave, mock_vault, alcx, mock_compounder):
+def test_mutiple_withdraw_mock(amount, alice, bob, charlie, dave, mock_vault, alcx, mock_ss_compounder):
 
     prior_alcx_balance_alice = alcx.balanceOf(alice)
     prior_alcx_balance_bob = alcx.balanceOf(bob)
@@ -31,13 +31,13 @@ def test_mutiple_withdraw_mock(amount, alice, bob, charlie, dave, mock_vault, al
     charlie_fee = (amount + charlie_gain) * 250 // 10000
     assert math.isclose(alcx.balanceOf(charlie), prior_alcx_balance_charlie + charlie_gain - charlie_fee, rel_tol=1)
 
-    pool_balance = mock_compounder.totalPoolBalance()
+    pool_balance = mock_ss_compounder.totalPoolBalance()
     mock_vault.withdraw(amount, {'from': dave})
     dave_gain = charlie_gain + charlie_fee
     assert math.isclose(alcx.balanceOf(dave), prior_alcx_balance_dave + pool_balance - amount, rel_tol=1)
     assert math.isclose(alcx.balanceOf(dave), prior_alcx_balance_dave + dave_gain, rel_tol=1)
 
-    assert mock_compounder.totalPoolBalance() == 0
+    assert mock_ss_compounder.totalPoolBalance() == 0
     assert mock_vault.totalSupply() == 0
 
     balances = 0
@@ -49,7 +49,7 @@ def test_mutiple_withdraw_mock(amount, alice, bob, charlie, dave, mock_vault, al
                         prior_alcx_balance_charlie + prior_alcx_balance_dave)
 
 
-def test_with_simulated_harvest_mock(alice, bob, charlie, dave, mock_vault, alcx, mock_compounder, mock_pool, owner):
+def test_with_simulated_harvest_mock(alice, bob, charlie, dave, mock_vault, alcx, mock_ss_compounder, mock_pool, owner):
 
     amount = 1000
     harvest = 400
@@ -83,13 +83,13 @@ def test_with_simulated_harvest_mock(alice, bob, charlie, dave, mock_vault, alcx
     charlie_fee = (amount + charlie_gain) * 250 // 10000
     assert math.isclose(alcx.balanceOf(charlie), prior_alcx_balance_charlie + charlie_gain - charlie_fee, rel_tol=1)
 
-    pool_balance = mock_compounder.totalPoolBalance()
+    pool_balance = mock_ss_compounder.totalPoolBalance()
     mock_vault.withdraw(amount, {'from': dave})
     dave_gain = charlie_gain + charlie_fee + harvest_gain
     assert math.isclose(alcx.balanceOf(dave), prior_alcx_balance_dave + pool_balance - amount, rel_tol=1)
     assert math.isclose(alcx.balanceOf(dave), prior_alcx_balance_dave + dave_gain, rel_tol=1)
 
-    assert mock_compounder.totalPoolBalance() == 0
+    assert mock_ss_compounder.totalPoolBalance() == 0
     assert mock_vault.totalSupply() == 0
 
     balances = 0

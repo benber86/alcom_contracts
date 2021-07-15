@@ -17,9 +17,9 @@ class StateMachine:
     days = strategy("uint256", min_value=1, max_value=10)
     address = strategy("address", length=6)
 
-    def __init__(self, accounts, compounder, vault, alcx_pool, alcx, sushi):
+    def __init__(self, accounts, ss_compounder, vault, alcx_pool, alcx, sushi):
         self.accounts = accounts
-        self.compounder = compounder
+        self.compounder = ss_compounder
         self.vault = vault
         self.alcx_pool = alcx_pool
         self.alcx = alcx
@@ -70,13 +70,13 @@ class StateMachine:
 
 
 def test_vault_deposit_withdraw(
-    state_machine, accounts, Compounder, Vault
+    state_machine, accounts, SingleStakeCompounder, Vault
 ):
     alcx = Contract.from_explorer(ALCX)
     alcx_pool = Contract.from_explorer(ALCX_POOL)
     sushi = Contract.from_explorer(SUSHI_ROUTER)
     vault = Vault.deploy({"from": accounts[0]})
-    compounder = Compounder.deploy(vault, ALCX_POOL, {"from": accounts[0]})
+    compounder = SingleStakeCompounder.deploy(vault, ALCX_POOL, {"from": accounts[0]})
     vault.setCompounder(compounder, {"from": accounts[0]})
     state_machine(
         StateMachine,

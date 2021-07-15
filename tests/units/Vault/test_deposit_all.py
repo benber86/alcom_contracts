@@ -3,7 +3,7 @@ import brownie
 POOL_ID = 1
 
 
-def test_deposit_all(erin, vault, compounder, alcx, alcx_pool):
+def test_deposit_all(erin, vault, ss_compounder, alcx, alcx_pool):
     prior_pool_tvl = alcx_pool.getPoolTotalDeposited(POOL_ID)
     prior_alcx_balance = alcx.balanceOf(erin)
     alcx.approve(vault, alcx.balanceOf(erin), {'from': erin})

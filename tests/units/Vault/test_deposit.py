@@ -5,7 +5,7 @@ PRECISION = 10e-15
 
 
 @pytest.mark.parametrize("amount", [1, 100, 10**18])
-def test_deposit(alice, bob, vault, amount, alcx, alcx_pool, compounder):
+def test_deposit(alice, bob, vault, amount, alcx, alcx_pool, ss_compounder):
     prior_pool_tvl = alcx_pool.getPoolTotalDeposited(POOL_ID)
     prior_alcx_balance = alcx.balanceOf(alice)
     alcx.approve(vault, amount, {'from': alice})
@@ -20,12 +20,12 @@ def test_deposit(alice, bob, vault, amount, alcx, alcx_pool, compounder):
 
     prior_supply = vault.totalSupply()
     vault.deposit(amount, {'from': bob})
-    balance = compounder.stakeBalance() - amount
+    balance = ss_compounder.stakeBalance() - amount
 
     assert vault.balanceOf(bob) == (amount * prior_supply // (balance))
     assert alcx_pool.getPoolTotalDeposited(POOL_ID) == prior_pool_tvl + amount * 2
     assert vault.totalSupply() == vault.balanceOf(bob) + vault.balanceOf(alice)
-    assert alcx_pool.getStakeTotalDeposited(compounder, POOL_ID) == amount * 2
+    assert alcx_pool.getStakeTotalDeposited(ss_compounder, POOL_ID) == amount * 2
 
 
 def test_deposit_above_balance(alice, alcx, vault):

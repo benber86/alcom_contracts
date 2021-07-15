@@ -6,44 +6,43 @@ import "OpenZeppelin/openzeppelin-contracts@4.1.0/contracts/access/Ownable.sol";
 import "OpenZeppelin/openzeppelin-contracts@4.1.0/contracts/token/ERC20/utils/SafeERC20.sol";
 import "../interfaces/IStakingPools.sol";
 
-contract Compounder is Ownable {
+abstract contract CompounderBase is Ownable {
 
     using SafeERC20 for IERC20;
-    // ALCX single staking pool
-    IStakingPools private Pool;
-    address public alcxPool;
-    uint256 constant public poolId = 1;
-    // ALCX token contract address
-    address constant public alcxContract = 0xdBdb4d16EdA451D0503b854CF79D55697F90c8DF;
-    IERC20 private ALCX = IERC20(alcxContract);
-    IERC20 private Vault;
+    uint256 public poolId;
+    // Alchemix Staking Pools contract address
+    address public poolContract;
+    IStakingPools public Pool;
+    // The token that will be staked (ALCX, SLP...)
+    IERC20 public Token;
+    IERC20 public Vault;
+    // Withdrawal fees applied on all exits save the last
     uint256 constant public fee = 250;
     uint256 constant public max = 10000;
 
-    constructor(address _vault, address _pool){
+    constructor(address _vault,
+                address _poolContract,
+                uint256 _poolId,
+                address token)
+    {
         Vault = IERC20(_vault);
-        alcxPool = _pool;
-        Pool = IStakingPools(_pool);
+        poolContract = _poolContract;
+        Pool = IStakingPools(poolContract);
+        poolId = _poolId;
+        Token = IERC20(token);
     }
 
-    /// @notice Deposits all ALCX in the contract in the staking pool
-    function stake() public {
-        ALCX.safeApprove(alcxPool, 0);
-        ALCX.safeApprove(alcxPool, ALCX.balanceOf(address(this)));
-        Pool.deposit(poolId, ALCX.balanceOf(address(this)));
-    }
+    /// @notice Staking function to be overriden
+    function stake() public virtual;
 
-    /// @notice Claims rewards from the pool and restakes them
-    function harvest() external {
-        Pool.claim(poolId);
-        stake();
-    }
+    /// @notice Harvesting function to be overriden
+    function harvest() external virtual;
 
-    /// @notice Withdraw non-ALCX ERC-20 tokens received by mistake
+    /// @notice Withdraw other ERC-20 tokens received by mistake
     function withdraw(IERC20 _asset) external onlyOwner
     returns (uint256 balance) {
-        // Prevents ALCX withdrawals
-        require(_asset != ALCX);
+        // Prevents withdrawals of token the contract is meant to stake
+        require(_asset != Token);
         balance = _asset.balanceOf(address(this));
         _asset.safeTransfer(msg.sender, balance);
     }
@@ -60,7 +59,7 @@ contract Compounder is Ownable {
         // If user is last to withdraw, we exit the pool
         if (Vault.totalSupply() == 0) {
             Pool.exit(poolId);
-            _withdrawable == ALCX.balanceOf(address(this));
+            _withdrawable == Token.balanceOf(address(this));
         }
         else {
             // We substract a small 0.25% withdrawal fee to prevent users "timing"
@@ -72,23 +71,23 @@ contract Compounder is Ownable {
             // The rewards will remain in the contract until the next deposit or
             // harvest.
             Pool.withdraw(poolId, _withdrawable);
-            // Transfer the amount minus the fee back to the vault to be delivered
-            // to user.
         }
-        ALCX.safeTransfer(address(Vault), _withdrawable);
+        // Transfer the amount minus the fee back to the vault to be delivered
+        // to user
+        Token.safeTransfer(address(Vault), _withdrawable);
         return _withdrawable;
     }
 
     /// @notice Query the amount currently staked
-    /// @return total - the total amount of ALCX staked
+    /// @return total - the total amount of tokens staked
     function stakeBalance() external view returns (uint256 total) {
         uint256 _total = Pool.getStakeTotalDeposited(address(this), poolId);
         return _total;
     }
 
     /// @notice Query amount currently staked or unclaimed
-    /// @return total - the total amount of ALCX staked and claimable
-    function totalPoolBalance() external view returns (uint256 total) {
+    /// @return total - the total amount of tokens staked plus claimable
+    function totalPoolBalance() external view virtual returns (uint256 total) {
         uint256 _total = Pool.getStakeTotalDeposited(address(this), poolId) +
         Pool.getStakeTotalUnclaimed(address(this), poolId);
         return _total;

@@ -4,7 +4,7 @@ POOL_ID = 1
 
 
 @pytest.mark.parametrize("amount", [1, 100, 10**18])
-def test_mock_deposit(alice, bob, charlie, dave, amount, alcx, mock_vault, mock_compounder, mock_pool):
+def test_mock_deposit(alice, bob, charlie, dave, amount, alcx, mock_vault, mock_ss_compounder, mock_pool):
 
     prior_alcx_balance = alcx.balanceOf(alice)
     alcx.approve(mock_vault, amount, {'from': alice})
@@ -23,5 +23,5 @@ def test_mock_deposit(alice, bob, charlie, dave, amount, alcx, mock_vault, mock_
     assert mock_vault.balanceOf(dave) == amount
     assert mock_pool.getPoolTotalDeposited(POOL_ID) == amount * 4
     assert mock_vault.totalSupply() == amount * 4
-    assert mock_compounder.stakeBalance() == amount * 4
+    assert mock_ss_compounder.stakeBalance() == amount * 4
     assert alcx.balanceOf(alice) == prior_alcx_balance - amount

@@ -3,7 +3,7 @@ import brownie
 POOL_ID = 1
 
 
-def test_get_position_value(alice, vault, bob, compounder, alcx_pool, alcx):
+def test_get_position_value(alice, vault, bob, ss_compounder, alcx_pool, alcx):
     test_value = 10 ** 18
     alcx.approve(vault, test_value, {'from': alice})
     vault.deposit(test_value, {'from': alice})

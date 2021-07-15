@@ -1,5 +1,5 @@
 import pytest
-from brownie import Vault, Compounder, MockPool, Contract
+from brownie import Vault, SingleStakeCompounder, MockPool, Contract
 
 WETH = '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2'
 ALCX = '0xdBdb4d16EdA451D0503b854CF79D55697F90c8DF'
@@ -68,8 +68,10 @@ def mock_vault(Vault, owner):
 
 
 @pytest.fixture(scope="function")
-def compounder(Compounder, vault, owner):
-    comp = Compounder.deploy(vault, ALCX_POOL, {"from": owner})
+def ss_compounder(SingleStakeCompounder, vault, owner):
+    comp = SingleStakeCompounder.deploy(vault,
+                                        ALCX_POOL,
+                                        {"from": owner})
     vault.setCompounder(comp, {"from": owner})
     yield comp
 
@@ -80,8 +82,10 @@ def mock_pool(MockPool, alcx, owner):
 
 
 @pytest.fixture(scope="function")
-def mock_compounder(Compounder, mock_vault, mock_pool, owner):
-    comp = Compounder.deploy(mock_vault, mock_pool.address, {"from": owner})
+def mock_ss_compounder(SingleStakeCompounder, mock_vault, mock_pool, owner):
+    comp = SingleStakeCompounder.deploy(mock_vault,
+                                        mock_pool.address,
+                                        {"from": owner})
     mock_vault.setCompounder(comp, {"from": owner})
     yield comp
 
