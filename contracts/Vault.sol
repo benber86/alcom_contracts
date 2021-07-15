@@ -13,12 +13,18 @@ contract Vault is ERC20, Ownable {
     using SafeERC20 for IERC20;
     // Compounder contract
     address public compounderContract = address(0);
-    ICompounder private Compounder;
+    ICompounder public Compounder;
     // ALCX token contract address
-    address constant public alcxContract = 0xdBdb4d16EdA451D0503b854CF79D55697F90c8DF;
-    IERC20 private ALCX = IERC20(alcxContract);
+    address public tokenContract;
+    IERC20 public StakeToken;
 
-    constructor () ERC20("Single Staked ALCX", "ssALCX") {
+    constructor (address _token) public ERC20(
+        string(abi.encodePacked("alcom ", ERC20(_token).name())),
+        string(abi.encodePacked("alc", ERC20(_token).symbol())))
+    {
+        tokenContract = _token;
+        StakeToken = IERC20(tokenContract);
+
     }
 
     /// @notice Set the address of the autocompounding contract
@@ -38,7 +44,7 @@ contract Vault is ERC20, Ownable {
     function deposit(uint256 _amount) public autoCompounderSet {
         require(_amount != 0, "Deposit too small");
         uint256 _before = Compounder.stakeBalance();
-        ALCX.safeTransferFrom(msg.sender, compounderContract, _amount);
+        StakeToken.safeTransferFrom(msg.sender, compounderContract, _amount);
         Compounder.stake();
 
         // Issues shares in proportion of deposit to pool amount
@@ -53,7 +59,7 @@ contract Vault is ERC20, Ownable {
 
     /// @notice Deposit all of user's ALCX balance
     function depositAll() external {
-        deposit(ALCX.balanceOf(msg.sender));
+        deposit(StakeToken.balanceOf(msg.sender));
     }
 
     /// @notice Withdraws user's ALCX from the pool in proportion to the amount
@@ -70,7 +76,7 @@ contract Vault is ERC20, Ownable {
         // Withdraw from the compounder
         uint256 _withdrawable = Compounder.withdraw(amount);
         // And sends back ALCX to user
-        ALCX.safeTransfer(msg.sender, _withdrawable);
+        StakeToken.safeTransfer(msg.sender, _withdrawable);
     }
 
     /// @notice Withdraw all of a users' position
