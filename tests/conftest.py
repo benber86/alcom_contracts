@@ -59,12 +59,12 @@ def no_coiner(accounts):
 
 @pytest.fixture(scope="function")
 def vault(Vault, owner):
-    yield Vault.deploy({"from": owner})
+    yield Vault.deploy(ALCX, {"from": owner})
 
 
 @pytest.fixture(scope="function")
 def mock_vault(Vault, owner):
-    yield Vault.deploy({"from": owner})
+    yield Vault.deploy(ALCX, {"from": owner})
 
 
 @pytest.fixture(scope="function")
