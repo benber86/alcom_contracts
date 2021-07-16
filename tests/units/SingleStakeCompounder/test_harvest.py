@@ -2,8 +2,6 @@ import brownie
 from brownie import chain
 import pytest
 
-DAY = 86400
-
 
 @pytest.mark.parametrize("amount", [10**8, 10**12, 10**18])
 def test_harvest(alice, bob, vault, amount, alcx, alcx_pool, ss_compounder):

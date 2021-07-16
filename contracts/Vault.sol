@@ -14,7 +14,7 @@ contract Vault is ERC20, Ownable {
     // Compounder contract
     address public compounderContract = address(0);
     ICompounder public Compounder;
-    // ALCX token contract address
+    // Contract address of the token to stake
     address public tokenContract;
     IERC20 public StakeToken;
 
@@ -40,7 +40,7 @@ contract Vault is ERC20, Ownable {
 
     /// @notice Deposit user funds in the autocompounder and mints tokens
     ///         representing user's share of the pool in exchange
-    /// @param _amount - the amount of ALCX to deposit
+    /// @param _amount - the amount of tokens to deposit
     function deposit(uint256 _amount) public autoCompounderSet {
         require(_amount != 0, "Deposit too small");
         uint256 _before = Compounder.stakeBalance();
@@ -57,7 +57,7 @@ contract Vault is ERC20, Ownable {
         _mint(msg.sender, shares);
     }
 
-    /// @notice Deposit all of user's ALCX balance
+    /// @notice Deposit all of user's token balance
     function depositAll() external {
         deposit(StakeToken.balanceOf(msg.sender));
     }
@@ -71,11 +71,11 @@ contract Vault is ERC20, Ownable {
         // the number of shares sent
         uint256 amount = _shares * Compounder.stakeBalance()
         / totalSupply();
-        // Burn the shares before retrieving ALCX
+        // Burn the shares before retrieving tokens
         _burn(msg.sender, _shares);
         // Withdraw from the compounder
         uint256 _withdrawable = Compounder.withdraw(amount);
-        // And sends back ALCX to user
+        // And sends back tokens to user
         StakeToken.safeTransfer(msg.sender, _withdrawable);
     }
 
@@ -88,9 +88,11 @@ contract Vault is ERC20, Ownable {
     /// @return the ALCX value
     function getPositionValue() external view
     returns (uint256) {
-        require(totalSupply() > 0, "Empty vault");
+        if (totalSupply() > 0) {
         return (balanceOf(msg.sender) * Compounder.stakeBalance()
         / totalSupply());
+        }
+        else return 0;
     }
 
     modifier autoCompounderSet() {

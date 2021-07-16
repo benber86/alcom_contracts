@@ -62,7 +62,7 @@ contract SLPCompounder is Ownable {
     }
 
     /// @notice Claims rewards from the pool and restakes them
-    function harvest() external {
+    function harvest() public {
         masterChef.harvest(poolId, address(this));
 
         uint256 _alcxAmount = alcx.balanceOf(address(this));
