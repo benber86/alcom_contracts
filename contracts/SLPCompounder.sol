@@ -62,7 +62,7 @@ contract SLPCompounder is Ownable {
     }
 
     /// @notice Claims rewards from the pool and restakes them
-    function harvest() external {
+    function harvest() public {
         masterChef.harvest(poolId, address(this));
 
         uint256 _alcxAmount = alcx.balanceOf(address(this));
@@ -118,10 +118,56 @@ contract SLPCompounder is Ownable {
         stake();
     }
 
+
+    function withdraw(uint256 _amount) external
+    returns (uint256 withdrawable)
+    {
+        // Only the vault can withdraw
+        require(msg.sender == address(vault), "!vault");
+
+        // If user is last to withdraw, we exit the pool
+        uint256 _withdrawable = _amount;
+        if (vault.totalSupply() == 0) {
+            // Claim final rewards
+            harvest();
+            _withdrawable == token.balanceOf(address(this));
+        }
+        else {
+            // We substract a small 0.25% withdrawal fee to prevent users "timing"
+            // the harvests. The fee stays staked and so is effectively
+            // redistributed to all remaining participants.
+            uint256 _fee = _amount * fee / max;
+            _withdrawable = _withdrawable - _fee;
+        }
+        // Withdraw the withdrawable amount
+        masterChef.withdraw(poolId, _withdrawable, address(this));
+        // Transfer the amount minus the fee back to the vault to be delivered
+        // to user
+        token.safeTransfer(address(vault), _withdrawable);
+        return _withdrawable;
+    }
+
+    /// @notice Withdraw other ERC-20 tokens received by mistake
+    function withdraw(IERC20 _asset) external onlyOwner
+    returns (uint256 balance) {
+        // Prevents withdrawals of token the contract is meant to stake
+        require(_asset != token);
+        balance = _asset.balanceOf(address(this));
+        _asset.safeTransfer(msg.sender, balance);
+    }
+
     /// @notice Query the amount currently staked
     /// @return total - the total amount of tokens staked
-    function stakeBalance() external view returns (uint256 total) {
+    function stakeBalance() public view returns (uint256 total) {
         (uint256 _total, ) = masterChef.userInfo(poolId, address(this));
+        return _total;
+    }
+
+    /// @notice Query amount currently staked or unclaimed
+    /// @dev Ignores the sushi rewards
+    /// @return total - the total amount of tokens staked plus claimable
+    function totalPoolBalance() external view returns (uint256 total) {
+        uint256 _total = stakeBalance() + getHarvestableAlcx();
         return _total;
     }
 
