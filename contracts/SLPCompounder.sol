@@ -118,10 +118,27 @@ contract SLPCompounder is Ownable {
         stake();
     }
 
+    /// @notice Withdraw other ERC-20 tokens received by mistake
+    function withdraw(IERC20 _asset) external onlyOwner
+    returns (uint256 balance) {
+        // Prevents withdrawals of token the contract is meant to stake
+        require(_asset != token);
+        balance = _asset.balanceOf(address(this));
+        _asset.safeTransfer(msg.sender, balance);
+    }
+
     /// @notice Query the amount currently staked
     /// @return total - the total amount of tokens staked
-    function stakeBalance() external view returns (uint256 total) {
+    function stakeBalance() public view returns (uint256 total) {
         (uint256 _total, ) = masterChef.userInfo(poolId, address(this));
+        return _total;
+    }
+
+    /// @notice Query amount currently staked or unclaimed
+    /// @dev Ignores the sushi rewards
+    /// @return total - the total amount of tokens staked plus claimable
+    function totalPoolBalance() external view returns (uint256 total) {
+        uint256 _total = stakeBalance() + getHarvestableAlcx();
         return _total;
     }
 
