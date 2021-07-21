@@ -53,7 +53,7 @@ contract SLPCompounder is Ownable {
     }
 
 
-    /// @notice Deposits all ALCX in the contract in the staking pool
+    /// @notice Deposits all stakable tokens in the contract in the staking pool
     function stake() public {
         token.safeApprove(masterChefContract, 0);
         token.safeApprove(masterChefContract, token.balanceOf(address(this)));
