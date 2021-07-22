@@ -53,7 +53,7 @@ contract SLPCompounder is Ownable {
     }
 
 
-    /// @notice Deposits all ALCX in the contract in the staking pool
+    /// @notice Deposits all stakable tokens in the contract in the staking pool
     function stake() public {
         token.safeApprove(masterChefContract, 0);
         token.safeApprove(masterChefContract, token.balanceOf(address(this)));
@@ -130,10 +130,10 @@ contract SLPCompounder is Ownable {
         if (vault.totalSupply() == 0) {
             // Claim final rewards
             harvest();
-            _withdrawable == token.balanceOf(address(this));
+            (_withdrawable, ) = masterChef.userInfo(poolId, address(this));
         }
         else {
-            // We substract a small 0.25% withdrawal fee to prevent users "timing"
+            // We substract a small 2.5% withdrawal fee to prevent users "timing"
             // the harvests. The fee stays staked and so is effectively
             // redistributed to all remaining participants.
             uint256 _fee = _amount * fee / max;
