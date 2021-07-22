@@ -58,10 +58,10 @@ abstract contract CompounderBase is Ownable {
         // If user is last to withdraw, we exit the pool
         if (vault.totalSupply() == 0) {
             pool.exit(poolId);
-            _withdrawable == token.balanceOf(address(this));
+            _withdrawable = token.balanceOf(address(this));
         }
         else {
-            // We substract a small 0.25% withdrawal fee to prevent users "timing"
+            // We substract a small 2.5% withdrawal fee to prevent users "timing"
             // the harvests. The fee stays staked and so is effectively
             // redistributed to all remaining participants.
             uint256 _fee = _amount * fee / max;
